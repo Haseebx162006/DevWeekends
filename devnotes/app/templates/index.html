@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DevNotes — Developer Notes & Snippet Manager</title>
+    <meta name="description" content="A lightweight developer tool for storing notes, code snippets, and tagged ideas." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+    <!-- ── Header ─────────────────────────────────────────────────── -->
+    <header id="app-header">
+        <div class="header-inner">
+            <div class="header-brand">
+                <div class="logo-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <line x1="10" y1="9" x2="8" y2="9"/>
+                    </svg>
+                </div>
+                <h1>DevNotes</h1>
+            </div>
+
+            <div class="header-search">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input
+                    type="text"
+                    id="search-input"
+                    placeholder="Search notes..."
+                    autocomplete="off"
+                />
+                <kbd class="search-shortcut">Ctrl+K</kbd>
+            </div>
+
+            <button id="new-note-btn" class="btn btn-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                New Note
+            </button>
+        </div>
+    </header>
+
+    <!-- ── Tag Filter Bar ─────────────────────────────────────────── -->
+    <section id="tag-bar">
+        <div class="tag-bar-inner">
+            <button class="tag-pill active" data-tag="all">All Notes</button>
+            <button class="tag-pill" data-tag="favorites">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                Favorites
+            </button>
+            <div class="tag-divider"></div>
+            <div id="dynamic-tags"></div>
+        </div>
+    </section>
+
+    <!-- ── Notes Grid ─────────────────────────────────────────────── -->
+    <main id="notes-container">
+        <div id="notes-grid" class="notes-grid"></div>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="empty-state hidden">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.3">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <h3>No notes yet</h3>
+            <p>Create your first note to get started</p>
+            <button class="btn btn-primary" onclick="openModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Create Note
+            </button>
+        </div>
+
+        <!-- No results state -->
+        <div id="no-results" class="empty-state hidden">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.3">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <h3>No matching notes</h3>
+            <p>Try a different search term or tag</p>
+        </div>
+    </main>
+
+    <!-- ── Note Modal ─────────────────────────────────────────────── -->
+    <div id="note-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">New Note</h2>
+                <button class="modal-close" onclick="closeModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <form id="note-form" onsubmit="handleSubmit(event)">
+                <input type="hidden" id="note-id" value="" />
+
+                <div class="form-group">
+                    <label for="note-title-input">Title</label>
+                    <input
+                        type="text"
+                        id="note-title-input"
+                        placeholder="e.g. Binary Search Implementation"
+                        required
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label for="note-content-input">
+                        Content
+                        <span class="label-hint">Supports code blocks with ```language</span>
+                    </label>
+                    <textarea
+                        id="note-content-input"
+                        placeholder="Write your note here... Use ```python to add code blocks"
+                        rows="12"
+                        required
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="note-tags-input">
+                        Tags
+                        <span class="label-hint">Comma-separated</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="note-tags-input"
+                        placeholder="e.g. python, leetcode, algorithms"
+                    />
+                </div>
+
+                <div class="form-group form-checkbox">
+                    <label>
+                        <input type="checkbox" id="note-favorite-input" />
+                        <svg class="star-checkbox" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                        Mark as favorite
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="modal-submit-btn">Create Note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Delete Confirmation Modal ──────────────────────────────── -->
+    <div id="delete-modal" class="modal-overlay hidden">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>Delete Note</h2>
+                <button class="modal-close" onclick="closeDeleteModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <p class="delete-message">Are you sure you want to delete this note? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Toast Container ────────────────────────────────────────── -->
+    <div id="toast-container"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
